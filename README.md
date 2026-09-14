@@ -1,6 +1,6 @@
-# csQt6
+# csqt6
 
-Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targeting **v6.11.1**), powered by [**csOrchestrator**](https://github.com/cscosine/csOrchestrator).
+Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targeting **v6.11.1**), powered by [**csorchestrator**](https://github.com/cscosine/csorchestrator).
 
 ---
 
@@ -10,11 +10,11 @@ Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targe
 
 * Python `>= 3.11`
 * Git
-* [csOrchestrator](https://github.com/cscosine/csOrchestrator) cloned as a peer directory (`../csOrchestrator`)
+* [csorchestrator](https://github.com/cscosine/csorchestrator) cloned as a peer directory (`../csorchestrator`)
 
 ### Environment Setup
 
-Bootstrap the local virtual environment, install dev dependencies, link `csOrchestrator` in editable mode, and install git hooks:
+Bootstrap the local virtual environment, install dev dependencies, link `csorchestrator` in editable mode, and install git hooks:
 
 **Linux / macOS:**
 ```bash
@@ -33,19 +33,19 @@ source .venv/bin/activate
 Execute the orchestrator script to run pipeline steps locally:
 
 ```bash
-./qt6.py
+./qt6_project.py
 # or
-python qt6.py
+python qt6_project.py
 ```
 
 ### Re-generating the GitHub Workflow
 
-To re-generate the GitHub Actions CI workflow (`.github/workflows/Qt6.yml`) from the definition in [`qt6.py`](qt6.py):
+To re-generate the GitHub Actions CI workflow (`.github/workflows/csqt6.yml`) from the definition in [`csqt6_project.py`](csqt6_project.py):
 
 ```bash
-./qt6.py generate-github-workflow
+./csqt6_project.py generate-github-workflow
 # or
-python qt6.py generate-github-workflow
+python csqt6_project.py generate-github-workflow
 ```
 
 ### Development & Quality Checks
@@ -71,18 +71,22 @@ pre-commit run --all-files
 
 ## Overview
 
-Building Qt 6 from source across multiple platforms (Linux and Windows) and architectures (`x64` and `arm64`) can be complex and error-prone. **csQt6** defines a declarative build and packaging recipe in Python using the `csOrchestrator` framework.
+Building Qt 6 from source across multiple platforms (Linux and Windows) and architectures (`x64` and `arm64`) can be complex and error-prone. **csqt6** defines a declarative build and packaging recipe in Python using the `csorchestrator` framework.
 
 With this setup:
 - The build pipeline, dependencies, and configuration flags are defined in Python code.
-- Cross-platform CI workflows (e.g. [`.github/workflows/Qt6.yml`](.github/workflows/Qt6.yml)) are automatically generated.
+- Cross-platform CI workflows (e.g. [`.github/workflows/csqt6.yml`](.github/workflows/csqt6.yml)) are automatically generated.
 - Build artifacts, manifests, and release archives (`.tar.gz` bundles) are assembled consistently across environments.
 
 ---
 
 ## Architecture & Build Pipeline
 
-The core build recipe is defined in [`qt6.py`](qt6.py) and executed across the matrix defined in [`utils/build_matrix.py`](utils/build_matrix.py).
+The core build recipe is defined in [`csqt6_project.py`](csqt6_project.py) and executed across the matrix defined in [`utils/build_matrix.py`](utils/build_matrix.py).
+
+### Version Alignment
+
+The project version (`6.11.1`, tracking the Qt release being built) is defined as a single source of truth in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) (`CSQT6_PROJECT_NAME` / `CSQT6_PROJECT_VERSION`), imported by [`csqt6_project.py`](csqt6_project.py) and mirrored in [`pyproject.toml`](pyproject.toml) — keep the two aligned when bumping the version.
 
 ### Execution Phases
 
@@ -103,7 +107,13 @@ The core build recipe is defined in [`qt6.py`](qt6.py) and executed across the m
    - Configures and compiles Qt with MSVC and Ninja.
 5. **Artifacts & Release Bundling**:
    - Packages build outputs into tarball archives.
-   - Generates `.csOrchestratorManifest` metadata and release bundles (`Qt6-v6.11.1-bundle.tar.gz`).
+   - Generates `.csOrchestratorManifest` metadata and release bundles (`csqt6-6.11.1-bundle.tar.gz`).
+
+### Library Dependencies
+
+Qt 6 is a **self-contained, single-source** build: the `qt6` repository has no compile/link-time dependencies on other csorchestrator-managed libraries, so `LIBRARY_DEPENDENCIES` in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) is intentionally empty.
+
+Downstream projects can consume a csqt6 GitHub release via the `auto_install_csorchestrator_managed_libraries()` helper in the same module: it downloads the release manifest, the `.tar.gz` bundle, and the requested libraries into `base_libs_dir` with minimal boilerplate (transitive dependency auto-fill is wired in via `LIBRARY_DEPENDENCIES` for future use).
 
 ---
 
@@ -119,41 +129,41 @@ The target execution matrix is configured in [`utils/build_matrix.py`](utils/bui
 | **Linux** | Ubuntu 24.04 | `arm64` | GCC (default) | Ninja |
 | **Windows** | Windows 10 | `x64` | MSVC 2022 (v17) | Ninja |
 
-Toolchain mappings for each platform are provided in [`csQt6/cs_orchestrator_config.py`](csQt6/cs_orchestrator_config.py).
+Toolchain mappings for each platform are provided in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py).
 
 ---
 
 ## Repository Structure
 
 ```
-csQt6/
+csqt6/
 ├── .agents/skills/
 │   └── csqt6-orchestrator-recipe/  # Agent skill for auditing recipes & re-generating workflows
-├── qt6.py                          # Main orchestrator pipeline recipe (source of truth)
+├── csqt6_project.py                          # Main orchestrator pipeline recipe (source of truth)
 ├── pyproject.toml                  # Project packaging, Ruff, MyPy, and Pytest configuration
 ├── setup.sh / setup.ps1            # Environment bootstrap scripts (Linux / Windows)
 ├── open-code.sh / open-code.ps1    # Helper scripts to launch VS Code inside the virtualenv
 ├── .pre-commit-config.yaml         # Pre-commit checks (Ruff, MyPy, Actionlint)
-├── csQt6/
-│   └── cs_orchestrator_config.py   # Toolchain and compiler mapping logic (included in release)
+├── csqt6/
+│   └── csorchestrator_config.py    # Toolchain and compiler mapping logic (included in release)
 ├── utils/
 │   ├── build_matrix.py             # OS, architecture, and generator matrix definitions
 │   ├── scripts.py                  # Bash and PowerShell script templates for build phases
 │   └── apt_packages_list.py        # System package dependencies for Ubuntu
-├── csorchestratorsdk/portable/     # [Autogenerated / Vendored] Standalone SDK synced from csOrchestrator
+├── csorchestratorsdk/portable/     # [Autogenerated / Vendored] Standalone SDK synced from csorchestrator
 ├── tests/
-│   └── csQt6/                      # Unit tests for configuration mappings
+│   └── csqt6/                      # Unit tests for configuration mappings
 └── .github/workflows/
-    └── Qt6.yml                     # [Autogenerated] GitHub Actions CI workflow (emitted by qt6.py)
+    └── csqt6.yml                     # [Autogenerated] GitHub Actions CI workflow (emitted by csqt6_project.py)
 ```
 
 ### Autogenerated Files Lifecycle
 
 | Path | Origin / Trigger | Maintenance Policy |
 |---|---|---|
-| [`.github/workflows/Qt6.yml`](.github/workflows/Qt6.yml) | Autogenerated by running `./qt6.py generate-github-workflow`. | **Never edit manually.** Edit `qt6.py` or files in `utils/`, then re-run the generator command. |
-| [`csorchestratorsdk/portable/`](csorchestratorsdk/portable/) | Autogenerated & exported by `csOrchestrator`. | Synced from `csOrchestrator` to provide lightweight release manifest utilities on CI runners without requiring `pip install csorchestrator`. |
-| `workspace/` *(gitignored)* | Created at runtime when running `./qt6.py` locally. | Holds cloned Qt sources (`workspace/qt6`), temporary build directories, and install outputs. Can be safely deleted to reset local state. |
+| [`.github/workflows/csqt6.yml`](.github/workflows/csqt6.yml) | Autogenerated by running `./csqt6_project.py generate-github-workflow`. | **Never edit manually.** Edit `csqt6_project.py` or files in `utils/`, then re-run the generator command. |
+| [`csorchestratorsdk/portable/`](csorchestratorsdk/portable/) | Autogenerated & exported by `csorchestrator`. | Synced from `csorchestrator` to provide lightweight release manifest utilities on CI runners without requiring `pip install csorchestrator`. |
+| `workspace/` *(gitignored)* | Created at runtime when running `./csqt6_project.py` locally. | Holds cloned Qt sources (`workspace/qt6`), temporary build directories, and install outputs. Can be safely deleted to reset local state. |
 
 ---
 
@@ -161,12 +171,12 @@ csQt6/
 
 This repository includes a project-specific agent skill under [`.agents/skills/`](.agents/skills/):
 
-* [**`csqt6-orchestrator-recipe`**](.agents/skills/csqt6-orchestrator-recipe/SKILL.md): Guides AI coding assistants in auditing recipe consistency (checking that extra files exist, verifying version alignment, and validating script imports), re-generating the GitHub Actions workflow (`./qt6.py generate-github-workflow`), and running pre-commit quality checks.
+* [**`csqt6-orchestrator-recipe`**](.agents/skills/csqt6-orchestrator-recipe/SKILL.md): Guides AI coding assistants in auditing recipe consistency (checking that extra files exist, verifying version alignment, and validating script imports), re-generating the GitHub Actions workflow (`./csqt6_project.py generate-github-workflow`), and running pre-commit quality checks.
 
 ### How to Use the Skill
 
 * **Automatic Activation (Natural Language)**: When using an AI coding assistant (e.g. Antigravity, Codex, Claude Code), the assistant automatically indexes `.agents/skills/` and follows this skill when given relevant prompts, such as:
-  * *"Audit the Qt6 recipe consistency"*
+  * *"Audit the csqt6_project recipe consistency"*
   * *"Update Qt version to v6.11.2 and re-generate the workflow"*
   * *"Add a new build target to the matrix and update CI"*
 * **Explicit Invocation**: Prompt the assistant directly:

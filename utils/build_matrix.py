@@ -18,7 +18,7 @@ from csorchestrator.frontend.cscmake_presets.supported_variants import (
 
 
 def populate_build_matrix() -> list[ContextOsArchitectureCompilerGenerator]:
-    retList: list[ContextOsArchitectureCompilerGenerator] = []
+    ret_list: list[ContextOsArchitectureCompilerGenerator] = []
 
     ## LINUX. use multi-config for x64 arch, use single config for arm64 arch
     for os_version in get_supported_os_version_list(OS.LINUX):
@@ -37,7 +37,7 @@ def populate_build_matrix() -> list[ContextOsArchitectureCompilerGenerator]:
                 compiler_version=ContextCompilerGenerator.COMPILER_VERSION_DEFAULT,
                 build_generator=generator,
             )
-            retList.append(
+            ret_list.append(
                 ContextOsArchitectureCompilerGenerator(context_os_architecture=os_arch, context_compiler_generator=ccg)
             )
 
@@ -59,8 +59,8 @@ def populate_build_matrix() -> list[ContextOsArchitectureCompilerGenerator]:
             compiler_version=version,
             build_generator=generator,
         )
-        retList.append(
+        ret_list.append(
             ContextOsArchitectureCompilerGenerator(context_os_architecture=os_arch, context_compiler_generator=ccg)
         )
 
-    return retList
+    return ret_list

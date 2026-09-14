@@ -31,6 +31,7 @@ from csorchestrator.frontend.step.step_get_repository import StepGetRepositoryEx
 from csorchestrator.frontend.step.step_github_action import StepAddGitHubAction
 from csorchestrator.portable.package_version import PackageVersion
 
+from csqt6.csorchestrator_config import CSQT6_PROJECT_NAME, CSQT6_PROJECT_VERSION
 from utils.apt_packages_list import get_apt_packages_list
 from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
@@ -51,15 +52,12 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
     base_target_dir = Path("workspace")
     base_install_dir = base_target_dir / Path("install")
 
-    # please keep version aligned with qt version
-    qt_version_tag = "v6.11.1"
-
     o = create_default_orchestrator(
-        name="Qt6",
-        version=qt_version_tag,
+        name=CSQT6_PROJECT_NAME,
+        version=CSQT6_PROJECT_VERSION,
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
-        additional_files_list=[Path("csQt6/cs_orchestrator_config.py")],
+        additional_files_list=[Path("csqt6/csorchestrator_config.py")],
     )
 
     o.execution_matrix = create_default_execution_matrix(populate_build_matrix())
@@ -83,7 +81,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
                 repo_org="qt",
                 repo_name="qt5" + ".git",
             ),
-            repo_ref=qt_version_tag,
+            repo_ref="v" + CSQT6_PROJECT_VERSION,
         )
         .add_extra(
             StepGetRepositoryExtraDepthOne(
@@ -222,10 +220,10 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
     create_and_upload_artifacts(
         orchestrator=o,
         base_install_dir=base_install_dir,
-        repos_version_list=[PackageVersion(repo_name, qt_version_tag)],
+        repos_version_list=[PackageVersion(repo_name, CSQT6_PROJECT_VERSION)],
     )
 
-    return OptionalOrchestratorWithReport.createResultAndReport(o, report)
+    return OptionalOrchestratorWithReport.create_result_and_report(o, report)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

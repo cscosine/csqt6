@@ -8,10 +8,10 @@ from csorchestrator.domain.context.context_compiler_generator import (
 from csorchestrator.domain.context.context_os_architecture import OS
 from csorchestrator.frontend.cscmake_presets.supported_variants import get_supported_context_os_architecture_list
 
-from csQt6.cs_orchestrator_config import qt6_mapping
+from csqt6.csorchestrator_config import qt6_mapping
 
 
-def test_cs_orchestrator_config() -> None:
+def test_csorchestrator_config() -> None:
 
     all = get_supported_context_os_architecture_list()
 
