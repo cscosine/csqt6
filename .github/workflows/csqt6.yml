@@ -1,0 +1,465 @@
+name: csqt6
+'on':
+  push:
+    branches:
+    - main
+    - dev
+    tags:
+    - v*.*.*
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch: {}
+  schedule:
+  - cron: 0 3 * * 1
+jobs:
+  release-from-artifacts:
+    needs: orchestrator-matrix
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Repo Self Checkout
+      uses: actions/checkout@v6
+    - name: Clean Artifacts Folder
+      run: rm -rf artifacts
+    - name: Download all artifacts
+      uses: actions/download-artifact@v8
+      with:
+        path: artifacts
+    - name: Show downloaded files
+      run: find artifacts -type f
+    - name: Manifest creation
+      run: |-
+        import os  # noqa: F401 keep even if locally unused, necessary with variable subst
+        import sys
+        from pathlib import Path
+        from typing import cast
+
+        from csorchestratorsdk.portable.release_manifest import (
+            PublishPackageMode,  # noqa: F401 keep even if locally unused, necessary after variable subst
+            ReposPublishConfigDict,
+            collect_release_manifest_single_variant_and_prepare_manifest,
+        )
+
+        input_folder_base = Path('.')
+        input_manifest_path_variant = [(Path('csqt6-6.11.1-csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja/csqt6-6.11.1-csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja.csOrchestratorManifest'), 'csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja'), (Path('csqt6-6.11.1-csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninja/csqt6-6.11.1-csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninja.csOrchestratorManifest'), 'csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninja'), (Path('csqt6-6.11.1-csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja/csqt6-6.11.1-csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja.csOrchestratorManifest'), 'csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja'), (Path('csqt6-6.11.1-csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja/csqt6-6.11.1-csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja.csOrchestratorManifest'), 'csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja'), (Path('csqt6-6.11.1-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja/csqt6-6.11.1-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja.csOrchestratorManifest'), 'csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja')]
+        output_manifest_filename = Path('csqt6-6.11.1.csOrchestratorManifest')
+        project_name = 'csqt6'
+        project_version = '6.11.1'
+        base_path_additional_files = Path(os.environ["GITHUB_WORKSPACE"])
+        list_additional_files = [Path('csqt6_config.py')]
+        output_folder_additional_files = Path('generated-for-release')
+        output_bundle_file_name = Path('csqt6-6.11.1-bundle.tar.gz')
+        repo_publish_config_dict = {}
+        header_only_variants_sources = {'csv1-linux': 'csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja', 'csv1-windows': 'csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja'}
+
+        errors_list = collect_release_manifest_single_variant_and_prepare_manifest(
+            input_folder_base=input_folder_base,
+            input_manifest_path_variant=input_manifest_path_variant,
+            output_manifest_filename=output_manifest_filename,
+            project_name=project_name,
+            project_version=project_version,
+            base_path_additional_files=base_path_additional_files,
+            list_additional_files=list_additional_files,
+            output_folder_additional_files=output_folder_additional_files,
+            output_bundle_file_name=output_bundle_file_name,
+            repo_publish_config_dict=repo_publish_config_dict,
+            header_only_variants_sources=header_only_variants_sources,
+            archive_files_are_in_context_based_folder=True,
+        )
+
+        if len(errors_list) > 0:
+            for e in errors_list:
+                print(e)
+            sys.exit("ERROR: getting package versions")
+      shell: python
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      working-directory: artifacts
+    - name: Upload manifest as artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: csqt6-6.11.1.csOrchestratorManifest
+        path: |-
+          artifacts/generated-for-release/csqt6-6.11.1.csOrchestratorManifest
+        overwrite: true
+    - name: Upload additional file csqt6-6.11.1-bundle.tar.gz as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: csqt6-6.11.1-bundle.tar.gz
+        path: |-
+          artifacts/generated-for-release/csqt6-6.11.1-bundle.tar.gz
+        overwrite: true
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v3
+      with:
+        files: |-
+          artifacts/**/*.tar.gz
+          artifacts/generated-for-release/csqt6-6.11.1.csOrchestratorManifest
+          artifacts/generated-for-release/csqt6-6.11.1-bundle.tar.gz
+      if: ${{ github.ref_type == 'tag' }}
+  orchestrator-matrix:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - execution_id: '0'
+          os: linux
+          os_version: ubuntu22.04
+          architecture: x64
+          architecture_variant: generic
+          compiler: gcc
+          compiler_version: default
+          generator: ninja
+          generator_type: singleconfig
+          generator_cmake: Ninja
+          runner: ubuntu-22.04
+          c_compiler: gcc
+          cpp_compiler: g++
+        - execution_id: '1'
+          os: linux
+          os_version: ubuntu22.04
+          architecture: arm64
+          architecture_variant: generic
+          compiler: gcc
+          compiler_version: default
+          generator: ninja
+          generator_type: singleconfig
+          generator_cmake: Ninja
+          runner: ubuntu-22.04-arm
+          c_compiler: gcc
+          cpp_compiler: g++
+        - execution_id: '2'
+          os: linux
+          os_version: ubuntu24.04
+          architecture: x64
+          architecture_variant: generic
+          compiler: gcc
+          compiler_version: default
+          generator: ninja
+          generator_type: singleconfig
+          generator_cmake: Ninja
+          runner: ubuntu-24.04
+          c_compiler: gcc
+          cpp_compiler: g++
+        - execution_id: '3'
+          os: linux
+          os_version: ubuntu24.04
+          architecture: arm64
+          architecture_variant: generic
+          compiler: gcc
+          compiler_version: default
+          generator: ninja
+          generator_type: singleconfig
+          generator_cmake: Ninja
+          runner: ubuntu-24.04-arm
+          c_compiler: gcc
+          cpp_compiler: g++
+        - execution_id: '4'
+          os: windows
+          os_version: v10
+          architecture: x64
+          architecture_variant: generic
+          compiler: msvc
+          compiler_version: msvc_2022_17
+          generator: ninja
+          generator_type: singleconfig
+          generator_cmake: Ninja
+          runner: windows-2022
+    steps:
+    - name: Repo git self-checkout
+      uses: actions/checkout@v6
+    - name: qt6
+      uses: actions/checkout@v6
+      with:
+        repository: qt/qt5.git
+        path: workspace/qt6
+        ref: v6.11.1
+        fetch-depth: '1'
+    - name: Run command install apt packages
+      run: |-
+        set -euo pipefail # enable strict mode
+
+
+        packages=(
+          libfontconfig1-dev
+          libfreetype-dev
+          libgtk-3-dev
+          libx11-dev
+          libx11-xcb-dev
+          libxcb-cursor-dev
+          libxcb-glx0-dev
+          libxcb-icccm4-dev
+          libxcb-image0-dev
+          libxcb-keysyms1-dev
+          libxcb-randr0-dev
+          libxcb-render-util0-dev
+          libxcb-shape0-dev
+          libxcb-shm0-dev
+          libxcb-sync-dev
+          libxcb-util-dev
+          libxcb-xfixes0-dev
+          libxcb-xkb-dev
+          libxcb1-dev
+          libxext-dev
+          libxfixes-dev
+          libxi-dev
+          libxkbcommon-dev
+          libxkbcommon-x11-dev
+          libopenjp2-7
+          libxss-dev
+          libudev-dev
+          libwayland-dev
+          libnss3-dev
+          gperf
+          doxygen
+          python3-html5lib
+        )
+
+        missing=()
+
+        for pkg in "${packages[@]}"; do
+          dpkg -s "$pkg" &>/dev/null || missing+=("$pkg")
+        done
+
+        if [ ${#missing[@]} -ne 0 ]; then
+
+          sudo apt update
+
+          echo "Need to install missing packages: ${missing[*]}"
+          sudo apt install -y "${missing[@]}"
+        else
+          echo "All packages already installed."
+        fi
+      if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
+      shell: bash
+    - name: Run command Free disk space (Linux-Ubuntu)
+      run: |-
+        set -euo pipefail
+
+        # Show available space
+        df -h
+
+        # Remove unnecessary tools/packages (do not fail if they are not installed)
+        sudo apt-get remove -y '^ghc-8.*' '^dotnet-.*' '^mongodb.*' 'mysql-.*' 'php.*' 'powershell' 'snap.*' || true
+        sudo apt-get autoremove -y
+        sudo apt-get clean
+
+        # Remove large directories
+        sudo rm -rf /usr/local/lib/android || true
+        sudo rm -rf /opt/hostedtoolcache || true
+
+        # Show available space
+        df -h
+      if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
+      shell: bash
+    - name: Run command init repo (Linux-Ubuntu)
+      run: |-
+        set -euo pipefail
+
+        cd workspace/qt6
+        ./init-repository
+      if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
+      shell: bash
+    - name: Run command Configure (Linux-Ubuntu)
+      run: |-
+        set -euo pipefail
+
+        ROOT_FOLDER=$(pwd)
+
+        FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
+        : "${FOLDER_NAME:?missing FOLDER_NAME}"
+
+        REPO_FOLDER="${ROOT_FOLDER}/workspace/qt6"
+        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
+        INSTALL_FOLDER="${ROOT_FOLDER}/workspace/install/${FOLDER_NAME}/qt6"
+
+        mkdir -p "${INSTALL_FOLDER}"
+        mkdir -p "${BUILD_FOLDER}"
+
+        cd "${BUILD_FOLDER}"
+
+        "${REPO_FOLDER}/configure" -no-pch -skip qtwebengine -release -prefix "${INSTALL_FOLDER}"
+      if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
+      shell: bash
+    - name: Run command Build (Linux-Ubuntu)
+      run: |-
+        set -euo pipefail
+
+        ROOT_FOLDER=$(pwd)
+
+        FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
+        : "${FOLDER_NAME:?missing FOLDER_NAME}"
+
+        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
+
+        cd "${BUILD_FOLDER}"
+
+        cmake --build .
+        cmake --install .
+      if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
+      shell: bash
+    - name: Setup MSVC
+      uses: TheMrMilchmann/setup-msvc-dev@v4
+      if: ${{ matrix.os == 'windows' }}
+      with:
+        arch: ${{ matrix.architecture }}
+    - name: Run command Show MSVC Version (Windows)
+      run: |-
+        Write-Host "=== Visual Studio ==="
+
+        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest `
+            -products * `
+            -property installationName
+
+        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest `
+            -products * `
+            -property catalog_productDisplayVersion
+
+        Write-Host ""
+        Write-Host "=== MSVC ==="
+
+        $cl = Get-Command cl.exe -ErrorAction Stop
+
+        Write-Host "cl.exe:"
+        Write-Host $cl.Source
+      if: ${{ matrix.os == 'windows' }}
+      shell: powershell
+    - name: Run command init repo (Windows)
+      run: |-
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = 'Stop'
+
+        cd workspace/qt6
+        ./init-repository.bat
+      if: ${{ matrix.os == 'windows' }}
+      shell: powershell
+    - name: Run command Configure (Windows)
+      run: |-
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = 'Stop'
+
+        if (!(Test-Path ".venv")) {
+            python -m venv .venv
+        }
+        & ".\.venv\Scripts\Activate.ps1"
+        python -m pip install --upgrade pip
+        pip install html5lib
+
+        $ROOT_FOLDER = Get-Location
+
+        $FOLDER_NAME = "csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
+        $BUILD_FOLDER_NAME = "build-${{ matrix.execution_id }}"
+
+        $REPO_FOLDER="$ROOT_FOLDER/workspace/qt6"
+        $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/qt6/release"
+        $INSTALL_FOLDER="$ROOT_FOLDER/workspace/install/$FOLDER_NAME/qt6"
+
+        New-Item -ItemType Directory -Force -Path "$INSTALL_FOLDER" | Out-Null
+        New-Item -ItemType Directory -Force -Path "$BUILD_FOLDER" | Out-Null
+
+        Set-Location $BUILD_FOLDER
+
+        & "$REPO_FOLDER/configure.bat" -no-pch -skip qtwebengine -release -prefix "$INSTALL_FOLDER"
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      if: ${{ matrix.os == 'windows' }}
+      shell: powershell
+    - name: Run command Build (Windows)
+      run: |-
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = 'Stop'
+
+        $ROOT_FOLDER = Get-Location
+
+        $BUILD_FOLDER_NAME = "build-${{ matrix.execution_id }}"
+
+        $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/qt6/release"
+
+
+        Set-Location $BUILD_FOLDER
+
+        cmake --build .
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        cmake --install .
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      if: ${{ matrix.os == 'windows' }}
+      shell: powershell
+    - name: Get Versions
+      run: |-
+        import sys
+        from pathlib import Path
+        from typing import cast
+
+        from csorchestratorsdk.portable.package_version import CMakeConfigPackageVersionGrep, PackageVersion
+        from csorchestratorsdk.portable.release_manifest import get_package_versions_and_write_single_variant_manifest
+
+        repos_config_file_list = []
+        repos_auto_search_list = []
+        repos_version = [PackageVersion(name='qt6', version='6.11.1')]
+        base_install_dir = Path('workspace/install')
+        install_subdir = Path('csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}')
+        variant_string = 'csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}'
+        project_name = 'csqt6'
+        project_version = '6.11.1'
+        output_file = Path('workspace/install/csqt6-6.11.1-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
+
+        errors_list = get_package_versions_and_write_single_variant_manifest(
+            repos_config_file_list=repos_config_file_list,
+            repos_auto_search_list=repos_auto_search_list,
+            repos_version=repos_version,
+            base_install_dir=base_install_dir,
+            install_subdir=install_subdir,
+            variant_string=variant_string,
+            project_name=project_name,
+            project_version=project_version,
+            output_file=output_file,
+        )
+
+        if len(errors_list) > 0:
+            for e in errors_list:
+                print(e)
+            sys.exit("ERROR: getting package versions")
+      shell: python
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+    - name: Create Archives
+      run: |-
+        import sys
+        from pathlib import Path
+        from typing import cast
+
+        from csorchestratorsdk.portable.release_manifest import (
+            load_release_manifest_single_variant_and_prepare_archive,
+        )
+
+        input_full_path = Path('workspace/install/csqt6-6.11.1-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
+        project_name_and_version = 'csqt6-6.11.1'
+        context_os_architecture_compiler_generator_string = 'csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}'
+        input_base_dir = Path('workspace/install')
+
+        errors_list = load_release_manifest_single_variant_and_prepare_archive(
+            input_full_path=input_full_path,
+            project_name_and_version=project_name_and_version,
+            context_os_architecture_compiler_generator_string=context_os_architecture_compiler_generator_string,
+            input_base_dir=input_base_dir.resolve(),
+        )
+
+        if len(errors_list) > 0:
+            for e in errors_list:
+                print(e)
+            sys.exit("ERROR: getting package versions")
+      shell: python
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: csqt6-6.11.1-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}
+        path: |-
+          workspace/install/*.tar.gz
+          workspace/install/*.csOrchestratorManifest
+        overwrite: true
