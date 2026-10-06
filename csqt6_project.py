@@ -31,7 +31,7 @@ from csorchestrator.frontend.step.step_get_repository import StepGetRepositoryEx
 from csorchestrator.frontend.step.step_github_action import StepAddGitHubAction
 from csorchestrator.portable.package_version import PackageVersion
 
-from csqt6.csorchestrator_config import CSQT6_PROJECT_NAME, CSQT6_PROJECT_VERSION
+from csqt6_config import CSQT6_PROJECT_NAME, CSQT6_PROJECT_VERSION
 from utils.apt_packages_list import get_apt_packages_list
 from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
@@ -57,7 +57,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
         version=CSQT6_PROJECT_VERSION,
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
-        additional_files_list=[Path("csqt6/csorchestrator_config.py")],
+        additional_files_list=[Path("csqt6_config.py")],
     )
 
     o.execution_matrix = create_default_execution_matrix(populate_build_matrix())
