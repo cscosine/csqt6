@@ -31,7 +31,6 @@ from csorchestrator.frontend.step.step_get_repository import StepGetRepositoryEx
 from csorchestrator.frontend.step.step_github_action import StepAddGitHubAction
 from csorchestrator.portable.package_version import PackageVersion
 
-from csqt6_config import CSQT6_PROJECT_NAME, CSQT6_PROJECT_VERSION
 from utils.apt_packages_list import get_apt_packages_list
 from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
@@ -53,8 +52,8 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
     base_install_dir = base_target_dir / Path("install")
 
     o = create_default_orchestrator(
-        name=CSQT6_PROJECT_NAME,
-        version=CSQT6_PROJECT_VERSION,
+        name="csqt6",
+        version="6.11.1",
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
         additional_files_list=[Path("csqt6_config.py")],
@@ -81,7 +80,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
                 repo_org="qt",
                 repo_name="qt5" + ".git",
             ),
-            repo_ref="v" + CSQT6_PROJECT_VERSION,
+            repo_ref="v" + o.version,
         )
         .add_extra(
             StepGetRepositoryExtraDepthOne(
@@ -220,7 +219,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
     create_and_upload_artifacts(
         orchestrator=o,
         base_install_dir=base_install_dir,
-        repos_version_list=[PackageVersion(repo_name, CSQT6_PROJECT_VERSION)],
+        repos_version_list=[PackageVersion(repo_name, o.version)],
     )
 
     return OptionalOrchestratorWithReport.create_result_and_report(o, report)
