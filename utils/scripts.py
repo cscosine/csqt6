@@ -42,9 +42,10 @@ df -h /
 #######################################################3
 
 
-# The modules not built (their sources not even cloned): the ones licensed under the GPL only (LicenseRef-Qt-Commercial
-# OR GPL-3.0-only in their sources, no LGPL option; checked on Qt 6.11.3), so that every archive is LGPL / BSD and a
-# consumer never links a GPL-only Qt library, and Qt WebEngine (LGPL, but Chromium: hours of build, not used).
+# The modules not built (their sources not even cloned): the ones licensed under the GPL only
+# (LicenseRef-Qt-Commercial OR GPL-3.0-only in their sources, no LGPL option; checked on Qt 6.11.3 and 6.12.0), so that
+# every archive is LGPL / BSD and a consumer never links a GPL-only Qt library. (Qt WebEngine and Qt PDF are released
+# apart since Qt 6.12.)
 # The commercial-only Qt products (Qt for MCUs, Safe Renderer, Insight, ...) are not in qt5.git: nothing to exclude.
 # Kept although GPL: the tools with the Qt GPL exception (designer, qmllint/qmlls, qsb, ...): their use and their
 # output do not put the GPL on the consumer.
@@ -64,7 +65,6 @@ QT_EXCLUDED_MODULES = [
     "qthttpserver",
     "qtcanvaspainter",
     "qttranslations",
-    "qtwebengine",
 ]
 
 QT_INIT_REPOSITORY_OPTIONS = "--module-subset=default," + ",".join(f"-{m}" for m in QT_EXCLUDED_MODULES)
@@ -162,8 +162,9 @@ def configure_repo_script_windows(repo_name: str) -> str:
     """
 
 
-# macOS: the oldest macOS the binaries run on, the minimum of Qt 6.11; explicit, so that it does not follow a newer Qt
-MACOS_CONFIGURE_CMAKE_ARGS = "-- -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0"
+# macOS: the oldest macOS the binaries run on, the minimum of Qt 6.12 (QT_SUPPORTED_MIN_MACOS_VERSION); explicit, so
+# that it does not follow the macOS of the build machine. A consumer of Qt sets at least this value.
+MACOS_CONFIGURE_CMAKE_ARGS = "-- -DCMAKE_OSX_DEPLOYMENT_TARGET=14.4"
 
 
 #######################################################3

@@ -1,6 +1,6 @@
 # csqt6
 
-Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targeting **v6.11.3**), powered by [**csorchestrator**](https://github.com/cscosine/csorchestrator).
+Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targeting **v6.12.0**), powered by [**csorchestrator**](https://github.com/cscosine/csorchestrator).
 
 ---
 
@@ -84,14 +84,27 @@ With this setup:
 
 The core build recipe is defined in [`csqt6_project.py`](csqt6_project.py) and executed across the matrix defined in [`utils/build_matrix.py`](utils/build_matrix.py).
 
+### Excluded Qt modules
+
+Every module licensed under the GPL only (no LGPL option) is neither cloned nor built (`QT_EXCLUDED_MODULES` in
+[`utils/scripts.py`](utils/scripts.py)), so the archives contain only LGPL / BSD libraries: Qt Charts, Data
+Visualization, Graphs, Quick 3D, Quick 3D Physics, Quick Timeline, Quick Effect Maker, Lottie, Virtual Keyboard, Network
+Authorization, CoAP, MQTT, HTTP Server, Canvas Painter, the translations, and the Wayland compositor
+(`-no-feature-wayland-server`; the Wayland client remains). Qt WebEngine and Qt PDF are no longer part of the Qt release
+since 6.12. The tools under the Qt GPL exception (Designer, qmllint, qsb, ...) remain: using them does not put the GPL
+on the consumer.
+
+macOS: the binaries run from macOS 14.4 (the minimum of Qt 6.12); a consumer of Qt sets at least this deployment
+target.
+
 ### Version Alignment
 
-The project version (`6.11.3`, tracking the Qt release being built) is defined as a single source of truth in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) (`CSQT6_PROJECT_NAME` / `CSQT6_PROJECT_VERSION`), imported by [`csqt6_project.py`](csqt6_project.py) and mirrored in [`pyproject.toml`](pyproject.toml) — keep the two aligned when bumping the version.
+The project version (`6.12.0`, tracking the Qt release being built) is defined as a single source of truth in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) (`CSQT6_PROJECT_NAME` / `CSQT6_PROJECT_VERSION`), imported by [`csqt6_project.py`](csqt6_project.py) and mirrored in [`pyproject.toml`](pyproject.toml) — keep the two aligned when bumping the version.
 
 ### Execution Phases
 
 1. **Repo Update**:
-   - Performs a shallow clone (`depth=1`) of `qt/qt5.git` at tag `v6.11.3` into `workspace/qt6`.
+   - Performs a shallow clone (`depth=1`) of `qt/qt5.git` at tag `v6.12.0` into `workspace/qt6`.
 2. **Install Requirements (Linux-Ubuntu)**:
    - Cleans disk space on CI runners to ensure sufficient storage for large Qt builds.
    - Installs system packages required for Qt 6 GUI, Wayland, X11/XCB, and font rendering (see [`utils/apt_packages_list.py`](utils/apt_packages_list.py)).
@@ -101,12 +114,6 @@ The project version (`6.11.3`, tracking the Qt release being built) is defined a
    - Configures Qt with `-no-pch -skip <module>... -no-feature-sql-mysql -no-feature-sql-psql -release
      -no-feature-wayland-server -prefix <INSTALL_FOLDER>`.
 
-   **Excluded modules.** Every module licensed under the GPL only (no LGPL option) is neither cloned nor built, so the
-   archives contain only LGPL / BSD libraries: Qt Charts, Data Visualization, Graphs, Quick 3D, Quick 3D Physics,
-   Quick Timeline, Quick Effect Maker, Lottie, Virtual Keyboard, Network Authorization, CoAP, MQTT, HTTP Server,
-   Canvas Painter, the translations, and the Wayland compositor (`-no-feature-wayland-server`; the Wayland client
-   remains). Qt WebEngine (LGPL, Chromium) is excluded for its build time. The tools under the Qt GPL exception
-   (Designer, qmllint, qsb, ...) remain: using them does not put the GPL on the consumer.
    - Compiles and installs Qt via `cmake --build .` and `cmake --install .`.
 4. **Configure & Build (Windows)**:
    - Configures the MSVC developer environment using `setup-msvc-dev@v4`.
@@ -116,7 +123,7 @@ The project version (`6.11.3`, tracking the Qt release being built) is defined a
    - Configures and compiles Qt with MSVC and Ninja.
 5. **Artifacts & Release Bundling**:
    - Packages build outputs into tarball archives.
-   - Generates `.csOrchestratorManifest` metadata and release bundles (`csqt6-6.11.3-bundle.tar.gz`).
+   - Generates `.csOrchestratorManifest` metadata and release bundles (`csqt6-6.12.0-bundle.tar.gz`).
 
 ### Library Dependencies
 
