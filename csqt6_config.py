@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from csorchestrator.application.recipes.manifest_github import ManifestGithub, create_steps_to_get_libs_from_manifest
+from csorchestrator.application.recipes.manifest_github import (
+    ManifestGithub,
+    create_steps_to_get_libs_from_manifest,
+    install_ubuntu_apt_packages,
+)
 from csorchestrator.domain.context.context_compiler_generator import (
     Compiler,
     ContextCompilerGenerator,
@@ -47,6 +51,21 @@ def qt6_mapping(
     return None
 
 
+# Linux: the libraries of the system the Qt plugins of a GUI application need at run time (the xcb platform plugin,
+# libxcb-cursor0 since Qt 6.5) and not the libraries of Qt: installed with the qt6 archives, so that a consumer's
+# deployment (cs_deployment_qt_gui, which resolves the plugins when it is made) and its run find them
+QT6_PLUGINS_UBUNTU_PACKAGES = [
+    "libxcb-cursor0",
+    "libxcb-icccm4",
+    "libxcb-image0",
+    "libxcb-keysyms1",
+    "libxcb-render-util0",
+    "libxcb-shape0",
+    "libxcb-xkb1",
+    "libxkbcommon-x11-0",
+]
+
+
 def auto_install_csorchestrator_managed_libraries(
     orchestrator: Orchestrator,
     base_libs_dir: Path,
@@ -61,6 +80,13 @@ def auto_install_csorchestrator_managed_libraries(
 
     _ = dependencies_config_path
     _ = download_dependencies_manifest_and_bundle
+
+    if required_libs is None or "qt6" in required_libs:
+        install_ubuntu_apt_packages(
+            orchestrator=orchestrator,
+            packages=QT6_PLUGINS_UBUNTU_PACKAGES,
+            phase_name_suffix=f"{phase_name_suffix} (Qt plugins)",
+        )
 
     return create_steps_to_get_libs_from_manifest(
         orchestrator=orchestrator,

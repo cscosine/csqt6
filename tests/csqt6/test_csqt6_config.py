@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import pytest
 from csorchestrator.domain.context.context_compiler_generator import (
     Compiler,
     ContextCompilerGenerator,
@@ -34,3 +35,35 @@ def test_csorchestrator_config() -> None:
             )
         else:
             raise AssertionError("non expected config")
+
+
+def test_the_qt6_download_installs_the_system_packages_of_the_plugins(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With qt6 (or every library), the Ubuntu packages of the Qt plugins are installed before the download."""
+    from pathlib import Path
+
+    from csorchestrator.application.recipes.create_orchestrator import create_default_orchestrator
+    from csorchestrator.foundation.core.report import Report
+    from csorchestrator.frontend.step.step_custom_command import StepInstallAptPackages
+
+    import csqt6_config
+
+    monkeypatch.setattr(csqt6_config, "create_steps_to_get_libs_from_manifest", lambda **_: Report())
+
+    def packages(required_libs: list[str] | None) -> list[list[str]]:
+        o = create_default_orchestrator(name="consumer", version="1.0.0", base_install_dir=Path("install"))
+        csqt6_config.auto_install_csorchestrator_managed_libraries(
+            orchestrator=o,
+            base_libs_dir=Path("libs"),
+            manifest_description=None,  # type: ignore[arg-type]
+            manifest_loaded=None,  # type: ignore[arg-type]
+            dependencies_config_path=Path("dependencies"),
+            mapping_function=lambda c: c,
+            download_dependencies_manifest_and_bundle=True,
+            phase_name_suffix="deps",
+            required_libs=required_libs,
+        )
+        return [s.packages for p in o.phases for s in p.steps if isinstance(s, StepInstallAptPackages)]
+
+    assert packages(["qt6"]) == [csqt6_config.QT6_PLUGINS_UBUNTU_PACKAGES]
+    assert packages(None) == [csqt6_config.QT6_PLUGINS_UBUNTU_PACKAGES]
+    assert packages([]) == []
