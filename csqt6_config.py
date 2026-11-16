@@ -35,6 +35,15 @@ def qt6_mapping(
             build_generator=GeneratorWithType.NINJA,
         )
         return new_context
+    elif context.context_os_architecture.os == OS.MACOS:
+        # every macOS consumer (Ninja, Ninja Multi-Config, Xcode) uses the Apple Clang Ninja build of its macOS version
+        new_context = context
+        new_context.context_compiler_generator = ContextCompilerGenerator(
+            compiler_family=Compiler.APPLE_CLANG,
+            compiler_version=ContextCompilerGenerator.COMPILER_VERSION_DEFAULT,
+            build_generator=GeneratorWithType.NINJA,
+        )
+        return new_context
     return None
 
 

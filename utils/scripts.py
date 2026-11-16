@@ -17,6 +17,28 @@ sudo rm -rf /opt/hostedtoolcache || true
 df -h
 """
 
+free_disk_script_macos = r"""
+set -euo pipefail
+
+# Show available space
+df -h /
+
+# Android SDK, the Xcode versions other than the selected one, the simulators (do not fail if they are missing)
+sudo rm -rf "${ANDROID_HOME:-$HOME/Library/Android/sdk}" || true
+SELECTED_XCODE=$(xcode-select -p | sed 's|/Contents/Developer$||')
+echo "Selected Xcode: ${SELECTED_XCODE}"
+for x in /Applications/Xcode*.app; do
+    if [ "$(cd "$x" && pwd -P)" != "$(cd "${SELECTED_XCODE}" && pwd -P)" ]; then
+        sudo rm -rf "$x" || true
+    fi
+done
+xcrun simctl delete all || true
+sudo rm -rf "$HOME/Library/Developer/CoreSimulator" || true
+
+# Show available space
+df -h /
+"""
+
 #######################################################3
 
 
@@ -42,7 +64,14 @@ def init_repo_script_windows(repo_name: str) -> str:
 #######################################################3
 
 
-def configure_repo_script_linux(repo_name: str) -> str:
+# the configure options of every build (Linux, macOS, Windows)
+# -no-feature-sql-mysql -no-feature-sql-psql: the MySQL and PostgreSQL drivers would link the client libraries the
+# runner happens to have (libmysqlclient, libpq), not installed by the build nor by the consumers: not built.
+# SQLite (built in) and ODBC (Windows: system) remain.
+QT_CONFIGURE_OPTIONS = "-no-pch -skip qtwebengine -no-feature-sql-mysql -no-feature-sql-psql -release"
+
+
+def configure_repo_script_linux(repo_name: str, extra_cmake_args: str = "") -> str:
     return rf"""
     set -euo pipefail
 
@@ -60,7 +89,7 @@ def configure_repo_script_linux(repo_name: str) -> str:
 
     cd "${{BUILD_FOLDER}}"
 
-    "${{REPO_FOLDER}}/configure" -no-pch -skip qtwebengine -release -prefix "${{INSTALL_FOLDER}}"
+    "${{REPO_FOLDER}}/configure" {QT_CONFIGURE_OPTIONS} -prefix "${{INSTALL_FOLDER}}" {extra_cmake_args}
     """
 
 
@@ -91,9 +120,13 @@ def configure_repo_script_windows(repo_name: str) -> str:
 
     Set-Location $BUILD_FOLDER
 
-    & "$REPO_FOLDER/configure.bat" -no-pch -skip qtwebengine -release -prefix "$INSTALL_FOLDER"
+    & "$REPO_FOLDER/configure.bat" {QT_CONFIGURE_OPTIONS} -prefix "$INSTALL_FOLDER"
     if ($LASTEXITCODE) {{ exit $LASTEXITCODE }}
     """
+
+
+# macOS: the oldest macOS the binaries run on, the minimum of Qt 6.11; explicit, so that it does not follow a newer Qt
+MACOS_CONFIGURE_CMAKE_ARGS = "-- -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0"
 
 
 #######################################################3
