@@ -42,12 +42,40 @@ df -h /
 #######################################################3
 
 
+# The modules not built (their sources not even cloned): the ones licensed under the GPL only (LicenseRef-Qt-Commercial
+# OR GPL-3.0-only in their sources, no LGPL option; checked on Qt 6.11.3), so that every archive is LGPL / BSD and a
+# consumer never links a GPL-only Qt library, and Qt WebEngine (LGPL, but Chromium: hours of build, not used).
+# The commercial-only Qt products (Qt for MCUs, Safe Renderer, Insight, ...) are not in qt5.git: nothing to exclude.
+# Kept although GPL: the tools with the Qt GPL exception (designer, qmllint/qmlls, qsb, ...): their use and their
+# output do not put the GPL on the consumer.
+QT_EXCLUDED_MODULES = [
+    "qtcharts",
+    "qtdatavis3d",
+    "qtgraphs",
+    "qtquick3d",
+    "qtquick3dphysics",
+    "qtquicktimeline",
+    "qtquickeffectmaker",
+    "qtlottie",
+    "qtvirtualkeyboard",
+    "qtnetworkauth",
+    "qtcoap",
+    "qtmqtt",
+    "qthttpserver",
+    "qtcanvaspainter",
+    "qttranslations",
+    "qtwebengine",
+]
+
+QT_INIT_REPOSITORY_OPTIONS = "--module-subset=default," + ",".join(f"-{m}" for m in QT_EXCLUDED_MODULES)
+
+
 def init_repo_script_linux(repo_name: str) -> str:
     return rf"""
     set -euo pipefail
 
     cd workspace/{repo_name}
-    ./init-repository
+    ./init-repository {QT_INIT_REPOSITORY_OPTIONS}
     """
 
 
@@ -57,7 +85,8 @@ def init_repo_script_windows(repo_name: str) -> str:
     $ErrorActionPreference = 'Stop'
 
     cd workspace/{repo_name}
-    ./init-repository.bat
+    ./init-repository.bat "{QT_INIT_REPOSITORY_OPTIONS}"
+    if ($LASTEXITCODE) {{ exit $LASTEXITCODE }}
     """
 
 
@@ -68,7 +97,15 @@ def init_repo_script_windows(repo_name: str) -> str:
 # -no-feature-sql-mysql -no-feature-sql-psql: the MySQL and PostgreSQL drivers would link the client libraries the
 # runner happens to have (libmysqlclient, libpq), not installed by the build nor by the consumers: not built.
 # SQLite (built in) and ODBC (Windows: system) remain.
-QT_CONFIGURE_OPTIONS = "-no-pch -skip qtwebengine -no-feature-sql-mysql -no-feature-sql-psql -release"
+# -skip: QT_EXCLUDED_MODULES, also at configure (in case a dependency brought one of them in at init-repository).
+QT_CONFIGURE_OPTIONS = (
+    "-no-pch "
+    + " ".join(f"-skip {m}" for m in QT_EXCLUDED_MODULES)
+    + " -no-feature-sql-mysql -no-feature-sql-psql -release"
+)
+
+# Linux: no Wayland compositor (Qt Wayland Compositor, GPL only; the Wayland client and its plugins remain)
+LINUX_CONFIGURE_ARGS = "-no-feature-wayland-server"
 
 
 def configure_repo_script_linux(repo_name: str, extra_cmake_args: str = "") -> str:

@@ -34,6 +34,7 @@ from csorchestrator.portable.package_version import PackageVersion
 from utils.apt_packages_list import get_apt_packages_list
 from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
+    LINUX_CONFIGURE_ARGS,
     MACOS_CONFIGURE_CMAKE_ARGS,
     build_linux_script,
     build_windows_script,
@@ -55,7 +56,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
 
     o = create_default_orchestrator(
         name="csqt6",
-        version="6.11.1",
+        version="6.11.3",
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
         additional_files_list=[Path("csqt6_config.py")],
@@ -134,7 +135,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
         StepBashScriptCommand(
             name="Configure (Linux-Ubuntu)",
             description="configure repo",
-            cmd=dedent(configure_repo_script_linux(repo_name)).strip().splitlines(),
+            cmd=dedent(configure_repo_script_linux(repo_name, LINUX_CONFIGURE_ARGS)).strip().splitlines(),
         ).add_extra(StepExecuteOnlyOn(os=OS.LINUX, version_starts_with=UBUNTU_STRING_PREFIX))
     )
 
