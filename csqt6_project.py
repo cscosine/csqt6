@@ -34,11 +34,13 @@ from csorchestrator.portable.package_version import PackageVersion
 from utils.apt_packages_list import get_apt_packages_list
 from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
+    MACOS_CONFIGURE_CMAKE_ARGS,
     build_linux_script,
     build_windows_script,
     configure_repo_script_linux,
     configure_repo_script_windows,
     free_disk_script,
+    free_disk_script_macos,
     init_repo_script_linux,
     init_repo_script_windows,
     show_msvc_version_script,
@@ -142,6 +144,47 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
             description="build and install repo",
             cmd=dedent(build_linux_script(repo_name)).strip().splitlines(),
         ).add_extra(StepExecuteOnlyOn(os=OS.LINUX, version_starts_with=UBUNTU_STRING_PREFIX))
+    )
+
+    # ----------------- MACOS -----------------
+    # the Linux bash scripts (init, configure, build) work as they are on macOS
+    p = o.create_phase("Configure-Build-Test-Install (macOS)")
+    p.add_step(
+        StepBashScriptCommand(
+            name="Free disk space (macOS)",
+            description="Free disk space by removing the Android SDK, the other Xcode versions and the simulators",
+            cmd=dedent(free_disk_script_macos).strip().splitlines(),
+            dry_run=False,
+        )
+        .add_extra(StepExecuteOnlyOn(os=OS.MACOS))
+        .add_extra(StepSkipExecutionOnLocal())
+    )
+
+    p.add_step(
+        StepBashScriptCommand(
+            name="init repo (macOS)",
+            description="init repo",
+            cmd=dedent(init_repo_script_linux(repo_name)).strip().splitlines(),
+            dry_run=False,
+        )
+        .add_extra(StepExecuteOnlyOncePerMatrix())
+        .add_extra(StepExecuteOnlyOn(os=OS.MACOS))
+    )
+
+    p.add_step(
+        StepBashScriptCommand(
+            name="Configure (macOS)",
+            description="configure repo",
+            cmd=dedent(configure_repo_script_linux(repo_name, MACOS_CONFIGURE_CMAKE_ARGS)).strip().splitlines(),
+        ).add_extra(StepExecuteOnlyOn(os=OS.MACOS))
+    )
+
+    p.add_step(
+        StepBashScriptCommand(
+            name="Build (macOS)",
+            description="build and install repo",
+            cmd=dedent(build_linux_script(repo_name)).strip().splitlines(),
+        ).add_extra(StepExecuteOnlyOn(os=OS.MACOS))
     )
 
     # ----------------- WINDOWS -----------------
