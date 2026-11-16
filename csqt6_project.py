@@ -56,7 +56,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
 
     o = create_default_orchestrator(
         name="csqt6",
-        version="6.11.3",
+        version="6.12.0",
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
         additional_files_list=[Path("csqt6_config.py")],
