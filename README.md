@@ -143,9 +143,75 @@ The target execution matrix is configured in [`utils/build_matrix.py`](utils/bui
 | **Linux** | Ubuntu 22.04 | `arm64` | GCC (default) | Ninja |
 | **Linux** | Ubuntu 24.04 | `x64` | GCC (default) | Ninja |
 | **Linux** | Ubuntu 24.04 | `arm64` | GCC (default) | Ninja |
+| **Linux** | Ubuntu 26.04 | `x64` | GCC (default) | Ninja |
+| **Linux** | Ubuntu 26.04 | `arm64` | GCC (default) | Ninja |
 | **Windows** | Windows 10 | `x64` | MSVC 2022 (v17) | Ninja |
+| **macOS** | macOS 15 | `arm64` | Apple Clang (Xcode) | Ninja |
+| **macOS** | macOS 26 | `arm64` | Apple Clang (Xcode) | Ninja |
 
 Toolchain mappings for each platform are provided in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py).
+
+## Rebuilding Qt
+
+The archives of the releases are Qt built **unmodified** from the official sources, with the options below
+([`utils/scripts.py`](utils/scripts.py)). To build the same Qt by hand, e.g. a modified Qt to replace the one of an
+application (the LGPL allows it, see below):
+
+1. **Source**: Qt 6.12.0, the tag `v6.12.0` of `qt5.git` (<https://code.qt.io/qt/qt5.git>, mirrored at
+   <https://github.com/qt/qt5>), without the GPL-only modules ([Excluded Qt modules](#excluded-qt-modules)):
+
+   ```bash
+   git clone --branch v6.12.0 --depth 1 https://github.com/qt/qt5.git qt6
+   cd qt6
+   ./init-repository --module-subset=default,-qtcharts,-qtdatavis3d,-qtgraphs,-qtquick3d,-qtquick3dphysics,-qtquicktimeline,-qtquickeffectmaker,-qtlottie,-qtvirtualkeyboard,-qtnetworkauth,-qtcoap,-qtmqtt,-qthttpserver,-qtcanvaspainter,-qttranslations
+   ```
+
+   (On Windows `init-repository.bat`.) The source archive `qt-everywhere-src-6.12.0` of
+   <https://download.qt.io/official_releases/qt/6.12/6.12.0/> is the same code, with every module: the `-skip` options
+   below leave the excluded ones out.
+
+2. **Configure**, in an empty build folder, with the compiler of the platform: Linux, the GCC of the Ubuntu release
+   (x64 or arm64; the packages of [`utils/apt_packages_list.py`](utils/apt_packages_list.py)); Windows, MSVC 2022 x64
+   (an *x64 Native Tools* prompt, Python with `html5lib`); macOS, the Apple Clang of Xcode (arm64). Ninja and CMake
+   on the `PATH`:
+
+   ```bash
+   <qt6>/configure -no-pch -skip qtcharts -skip qtdatavis3d -skip qtgraphs -skip qtquick3d -skip qtquick3dphysics -skip qtquicktimeline -skip qtquickeffectmaker -skip qtlottie -skip qtvirtualkeyboard -skip qtnetworkauth -skip qtcoap -skip qtmqtt -skip qthttpserver -skip qtcanvaspainter -skip qttranslations -no-feature-sql-mysql -no-feature-sql-psql -release -prefix <install folder> <platform options>
+   ```
+
+   (On Windows `configure.bat`.) The platform options: Linux `-no-feature-wayland-server` (the Wayland compositor is
+   GPL only; the Wayland client remains); macOS `-- -DCMAKE_OSX_DEPLOYMENT_TARGET=14.4`; Windows none.
+
+3. **Build and install**: `cmake --build .` then `cmake --install .`; `<install folder>` is then the same layout as the
+   archives (`lib/`, `plugins/`, `bin/`, `sbom/`, ...).
+
+`./csqt6_project.py` runs the whole recipe for the current platform (see
+[Running the Orchestrator Locally](#running-the-orchestrator-locally)).
+
+### Replacing Qt in an application
+
+An application that ships Qt as shared libraries (e.g. a deployment made by csCMake `cs_deployment`) can run with
+another build of Qt in place of its own, which the LGPL v3 of Qt allows:
+
+- Qt **6.x, the same or a later release** than the one the application was built with (Qt keeps binary compatibility
+  within Qt 6), built for the same platform (the compiler ABI of the table above, the architecture, an Ubuntu release
+  not newer than the one of the application).
+- **Every** Qt library and plugin of the application, from the same Qt build: the plugins must match the libraries.
+- Copy them over the ones of the application: Linux `lib/libQt6*.so.6*` and `plugins/`; Windows `Qt6*.dll` and the
+  plugin folders (`platforms/`, `styles/`, ...) next to the executable; macOS the frameworks of `lib/` and `plugins/`,
+  then sign the application again (e.g. ad hoc: `codesign --force --deep --sign - <application folder>`).
+
+The README of the application says which libraries and plugins it ships (e.g.
+[csImgTracker](https://github.com/cscosine/csImgTracker#replacing-the-qt-libraries)).
+
+### Licenses of the archives
+
+The libraries and plugins of the archives are under the LGPL v3 (or the GPL v2/v3, or the commercial license of The Qt
+Company), the GPL-only modules being excluded; the tools under the GPL with the Qt GPL exception. The third-party code
+inside Qt, with its licenses and copyrights, is listed in the SBOM of every archive (`sbom/<repository>-6.12.0.spdx`,
+SPDX); it differs per platform (on Windows and macOS Qt bundles HarfBuzz, FreeType, libpng, PCRE2, ...; on Linux it
+uses the libraries of the system). An application shipping Qt ships these notices and the license texts (e.g.
+csImgTracker `licenses/`, generated from the SBOM).
 
 ---
 
@@ -212,4 +278,5 @@ This repository includes a project-specific agent skill under [`.agents/skills/`
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+The scripts of this repository are licensed under the [MIT License](LICENSE). The Qt they build keeps its own
+licenses: see [Licenses of the archives](#licenses-of-the-archives).
