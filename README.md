@@ -1,5 +1,7 @@
 # csqt6
 
+Qt 6 (LGPL modules) built for every platform
+
 Automated cross-platform build system and CI pipeline recipe for **Qt 6** (targeting **v6.12.0**), powered by [**csorchestrator**](https://github.com/cscosine/csorchestrator).
 
 ---
@@ -48,8 +50,6 @@ The shared files (setup, checks, CI, agent rules) come from
 [cs-project-template](https://github.com/cscosine/cs-project-template); to bring them to its latest version, on a
 branch: `copier update --defaults`.
 <!-- cs-template:end -->
-
----
 
 ## Overview
 
