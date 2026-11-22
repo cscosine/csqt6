@@ -81,7 +81,9 @@ target.
 
 ### Version Alignment
 
-The project version (`6.12.0`, tracking the Qt release being built) is defined as a single source of truth in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) (`CSQT6_PROJECT_NAME` / `CSQT6_PROJECT_VERSION`), imported by [`csqt6_project.py`](csqt6_project.py) and mirrored in [`pyproject.toml`](pyproject.toml) — keep the two aligned when bumping the version.
+The project version (`6.12.0`, tracking the Qt release being built) is defined as a single source of truth in [`csqt6/csorchestrator_config.py`](csqt6/csorchestrator_config.py) (`CSQT6_PROJECT_NAME` / `CSQT6_PROJECT_VERSION`), imported by [`csqt6_project.py`](csqt6_project.py) and mirrored in [`pyproject.toml`](pyproject.toml) — keep the two aligned when moving to another Qt version.
+
+Release tags: `vX.Y.Z` is the first build of Qt X.Y.Z; a rebuild of the same Qt with changes of ours (configure options, platforms, dependencies) is `vX.Y.Z-cs.1`, then `-cs.2`, … (candidates `vX.Y.Z-cs.N-rcM`); the project version stays `X.Y.Z`, the level of ours is in the tag only. A consumer pins the tag (`release_tag="v6.12.0-cs.1"`, `project_version="6.12.0"`).
 
 ### Execution Phases
 
