@@ -58,7 +58,7 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
     o = create_default_orchestrator(
         name="csqt6",
         # staggered weekly run (UTC), one project at a time in the build-train order (no shared runners)
-        schedule=Cron.weekly(DayOfWeek.SUN, hour=20, minute=7),
+        schedule=Cron.weekly(DayOfWeek.SUN, hour=19, minute=50),
         version="6.12.0",
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
