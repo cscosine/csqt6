@@ -12,6 +12,7 @@ from csorchestrator.application.recipes.create_orchestrator import (
     create_default_orchestrator,
 )
 from csorchestrator.domain.context.context_os_architecture import OS, UBUNTU_STRING_PREFIX
+from csorchestrator.domain.orchestrator.workflow_config import Cron, DayOfWeek
 from csorchestrator.foundation.core.report import Report
 from csorchestrator.foundation.git.resolve_url import RepoUrlParts
 from csorchestrator.frontend.github_workflow_translation.github_workflow_matrix_constants import (
@@ -56,6 +57,8 @@ def create_orchestrator() -> OptionalOrchestratorWithReport:
 
     o = create_default_orchestrator(
         name="csqt6",
+        # staggered weekly run (UTC), one project at a time in the build-train order (no shared runners)
+        schedule=Cron.weekly(DayOfWeek.SUN, hour=20, minute=7),
         version="6.12.0",
         base_install_dir=base_install_dir,
         populate_default_matrix=False,
