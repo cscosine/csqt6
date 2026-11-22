@@ -203,7 +203,7 @@ csImgTracker `licenses/`, generated from the SBOM).
 
 ```
 csqt6/
-├── .agents/skills/
+├── .claude/skills/
 │   └── csqt6-orchestrator-recipe/  # Agent skill for auditing recipes & re-generating workflows
 ├── csqt6_project.py                          # Main orchestrator pipeline recipe (source of truth)
 ├── pyproject.toml                  # Project packaging, Ruff, MyPy, and Pytest configuration
@@ -230,20 +230,20 @@ local run clones the Qt sources into `workspace/qt6`. The full list of generated
 
 ## Agent Skills
 
-This repository includes a project-specific agent skill under [`.agents/skills/`](.agents/skills/):
+This repository includes a project-specific agent skill under [`.claude/skills/`](.claude/skills/), where Claude Code finds it:
 
-* [**`csqt6-orchestrator-recipe`**](.agents/skills/csqt6-orchestrator-recipe/SKILL.md): Guides AI coding assistants in auditing recipe consistency (checking that extra files exist, verifying version alignment, and validating script imports), re-generating the GitHub Actions workflow (`./csqt6_project.py generate-github-workflow`), and running pre-commit quality checks.
+* [**`csqt6-orchestrator-recipe`**](.claude/skills/csqt6-orchestrator-recipe/SKILL.md): Guides AI coding assistants in auditing recipe consistency (checking that extra files exist, verifying version alignment, and validating script imports), re-generating the GitHub Actions workflow (`./csqt6_project.py generate-github-workflow`), and running pre-commit quality checks.
 
 ### How to Use the Skill
 
-* **Automatic Activation (Natural Language)**: When using an AI coding assistant (e.g. Antigravity, Codex, Claude Code), the assistant automatically indexes `.agents/skills/` and follows this skill when given relevant prompts, such as:
+* **Automatic Activation (Natural Language)**: Claude Code loads the skills of `.claude/skills/` and follows this one when given relevant prompts, such as:
   * *"Audit the csqt6_project recipe consistency"*
   * *"Update Qt version to v6.11.2 and re-generate the workflow"*
   * *"Add a new build target to the matrix and update CI"*
 * **Explicit Invocation**: Prompt the assistant directly:
   * *"Use the `csqt6-orchestrator-recipe` skill to audit the build recipe"*
-  * Or use the slash command `/csqt6-orchestrator-recipe` (if supported by your client)
-* **Human Developer Runbook (Standard Operating Procedure / SOP)**: For manual work without an AI assistant, [`.agents/skills/csqt6-orchestrator-recipe/SKILL.md`](.agents/skills/csqt6-orchestrator-recipe/SKILL.md) serves as a concise checklist for extra files, version alignment, and workflow re-generation commands.
+  * Or use the slash command `/csqt6-orchestrator-recipe`
+* **Human Developer Runbook (Standard Operating Procedure / SOP)**: For manual work without an AI assistant, [`.claude/skills/csqt6-orchestrator-recipe/SKILL.md`](.claude/skills/csqt6-orchestrator-recipe/SKILL.md) serves as a concise checklist for extra files, version alignment, and workflow re-generation commands.
 
 ---
 
