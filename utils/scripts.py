@@ -67,6 +67,9 @@ QT_EXCLUDED_MODULES = [
     "qttranslations",
 ]
 
+# the csorchestrator workspace of the recipe (base_target_dir): the Qt sources, build and install folders
+WORKSPACE_DIR = "_csw"
+
 QT_INIT_REPOSITORY_OPTIONS = "--module-subset=default," + ",".join(f"-{m}" for m in QT_EXCLUDED_MODULES)
 
 
@@ -74,7 +77,7 @@ def init_repo_script_linux(repo_name: str) -> str:
     return rf"""
     set -euo pipefail
 
-    cd workspace/{repo_name}
+    cd {WORKSPACE_DIR}/{repo_name}
     ./init-repository {QT_INIT_REPOSITORY_OPTIONS}
     """
 
@@ -84,7 +87,7 @@ def init_repo_script_windows(repo_name: str) -> str:
     Set-StrictMode -Version Latest
     $ErrorActionPreference = 'Stop'
 
-    cd workspace/{repo_name}
+    cd {WORKSPACE_DIR}/{repo_name}
     ./init-repository.bat "{QT_INIT_REPOSITORY_OPTIONS}"
     if ($LASTEXITCODE) {{ exit $LASTEXITCODE }}
     """
@@ -117,9 +120,9 @@ def configure_repo_script_linux(repo_name: str, extra_cmake_args: str = "") -> s
     FOLDER_NAME="$CS_DIR_FROM_MATRIX"
     : "${{FOLDER_NAME:?missing FOLDER_NAME}}"
 
-    REPO_FOLDER="${{ROOT_FOLDER}}/workspace/{repo_name}"
-    BUILD_FOLDER="${{ROOT_FOLDER}}/workspace/build/${{FOLDER_NAME}}/{repo_name}/release"
-    INSTALL_FOLDER="${{ROOT_FOLDER}}/workspace/install/${{FOLDER_NAME}}/{repo_name}"
+    REPO_FOLDER="${{ROOT_FOLDER}}/{WORKSPACE_DIR}/{repo_name}"
+    BUILD_FOLDER="${{ROOT_FOLDER}}/{WORKSPACE_DIR}/build/${{FOLDER_NAME}}/{repo_name}/release"
+    INSTALL_FOLDER="${{ROOT_FOLDER}}/{WORKSPACE_DIR}/install/${{FOLDER_NAME}}/{repo_name}"
 
     mkdir -p "${{INSTALL_FOLDER}}"
     mkdir -p "${{BUILD_FOLDER}}"
@@ -148,9 +151,9 @@ def configure_repo_script_windows(repo_name: str) -> str:
     $FOLDER_NAME = "$CS_DIR_FROM_MATRIX"
     $BUILD_FOLDER_NAME = "build-$CS_MATRIX_EXEC_ID"
 
-    $REPO_FOLDER="$ROOT_FOLDER/workspace/{repo_name}"
-    $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/{repo_name}/release"
-    $INSTALL_FOLDER="$ROOT_FOLDER/workspace/install/$FOLDER_NAME/{repo_name}"
+    $REPO_FOLDER="$ROOT_FOLDER/{WORKSPACE_DIR}/{repo_name}"
+    $BUILD_FOLDER="$ROOT_FOLDER/{WORKSPACE_DIR}/build/$BUILD_FOLDER_NAME/{repo_name}/release"
+    $INSTALL_FOLDER="$ROOT_FOLDER/{WORKSPACE_DIR}/install/$FOLDER_NAME/{repo_name}"
 
     New-Item -ItemType Directory -Force -Path "$INSTALL_FOLDER" | Out-Null
     New-Item -ItemType Directory -Force -Path "$BUILD_FOLDER" | Out-Null
@@ -178,7 +181,7 @@ def build_linux_script(repo_name: str) -> str:
     FOLDER_NAME="$CS_DIR_FROM_MATRIX"
     : "${{FOLDER_NAME:?missing FOLDER_NAME}}"
 
-    BUILD_FOLDER="${{ROOT_FOLDER}}/workspace/build/${{FOLDER_NAME}}/{repo_name}/release"
+    BUILD_FOLDER="${{ROOT_FOLDER}}/{WORKSPACE_DIR}/build/${{FOLDER_NAME}}/{repo_name}/release"
 
     cd "${{BUILD_FOLDER}}"
 
@@ -197,7 +200,7 @@ def build_windows_script(repo_name: str) -> str:
 
     $BUILD_FOLDER_NAME = "build-$CS_MATRIX_EXEC_ID"
 
-    $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/{repo_name}/release"
+    $BUILD_FOLDER="$ROOT_FOLDER/{WORKSPACE_DIR}/build/$BUILD_FOLDER_NAME/{repo_name}/release"
 
 
     Set-Location $BUILD_FOLDER

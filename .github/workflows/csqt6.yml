@@ -231,7 +231,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         repository: qt/qt5.git
-        path: workspace/qt6
+        path: _csw/qt6
         ref: v6.12.0
         fetch-depth: '1'
     - name: Run command install apt packages
@@ -315,7 +315,7 @@ jobs:
       run: |-
         set -euo pipefail
 
-        cd workspace/qt6
+        cd _csw/qt6
         ./init-repository --module-subset=default,-qtcharts,-qtdatavis3d,-qtgraphs,-qtquick3d,-qtquick3dphysics,-qtquicktimeline,-qtquickeffectmaker,-qtlottie,-qtvirtualkeyboard,-qtnetworkauth,-qtcoap,-qtmqtt,-qthttpserver,-qtcanvaspainter,-qttranslations
       if: ${{ matrix.os == 'linux' && startsWith(matrix.os_version, 'ubuntu') }}
       shell: bash
@@ -328,9 +328,9 @@ jobs:
         FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
         : "${FOLDER_NAME:?missing FOLDER_NAME}"
 
-        REPO_FOLDER="${ROOT_FOLDER}/workspace/qt6"
-        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
-        INSTALL_FOLDER="${ROOT_FOLDER}/workspace/install/${FOLDER_NAME}/qt6"
+        REPO_FOLDER="${ROOT_FOLDER}/_csw/qt6"
+        BUILD_FOLDER="${ROOT_FOLDER}/_csw/build/${FOLDER_NAME}/qt6/release"
+        INSTALL_FOLDER="${ROOT_FOLDER}/_csw/install/${FOLDER_NAME}/qt6"
 
         mkdir -p "${INSTALL_FOLDER}"
         mkdir -p "${BUILD_FOLDER}"
@@ -349,7 +349,7 @@ jobs:
         FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
         : "${FOLDER_NAME:?missing FOLDER_NAME}"
 
-        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
+        BUILD_FOLDER="${ROOT_FOLDER}/_csw/build/${FOLDER_NAME}/qt6/release"
 
         cd "${BUILD_FOLDER}"
 
@@ -384,7 +384,7 @@ jobs:
       run: |-
         set -euo pipefail
 
-        cd workspace/qt6
+        cd _csw/qt6
         ./init-repository --module-subset=default,-qtcharts,-qtdatavis3d,-qtgraphs,-qtquick3d,-qtquick3dphysics,-qtquicktimeline,-qtquickeffectmaker,-qtlottie,-qtvirtualkeyboard,-qtnetworkauth,-qtcoap,-qtmqtt,-qthttpserver,-qtcanvaspainter,-qttranslations
       if: ${{ matrix.os == 'macos' }}
       shell: bash
@@ -397,9 +397,9 @@ jobs:
         FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
         : "${FOLDER_NAME:?missing FOLDER_NAME}"
 
-        REPO_FOLDER="${ROOT_FOLDER}/workspace/qt6"
-        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
-        INSTALL_FOLDER="${ROOT_FOLDER}/workspace/install/${FOLDER_NAME}/qt6"
+        REPO_FOLDER="${ROOT_FOLDER}/_csw/qt6"
+        BUILD_FOLDER="${ROOT_FOLDER}/_csw/build/${FOLDER_NAME}/qt6/release"
+        INSTALL_FOLDER="${ROOT_FOLDER}/_csw/install/${FOLDER_NAME}/qt6"
 
         mkdir -p "${INSTALL_FOLDER}"
         mkdir -p "${BUILD_FOLDER}"
@@ -418,7 +418,7 @@ jobs:
         FOLDER_NAME="csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
         : "${FOLDER_NAME:?missing FOLDER_NAME}"
 
-        BUILD_FOLDER="${ROOT_FOLDER}/workspace/build/${FOLDER_NAME}/qt6/release"
+        BUILD_FOLDER="${ROOT_FOLDER}/_csw/build/${FOLDER_NAME}/qt6/release"
 
         cd "${BUILD_FOLDER}"
 
@@ -459,7 +459,7 @@ jobs:
         Set-StrictMode -Version Latest
         $ErrorActionPreference = 'Stop'
 
-        cd workspace/qt6
+        cd _csw/qt6
         ./init-repository.bat "--module-subset=default,-qtcharts,-qtdatavis3d,-qtgraphs,-qtquick3d,-qtquick3dphysics,-qtquicktimeline,-qtquickeffectmaker,-qtlottie,-qtvirtualkeyboard,-qtnetworkauth,-qtcoap,-qtmqtt,-qthttpserver,-qtcanvaspainter,-qttranslations"
         if ($LASTEXITCODE) { exit $LASTEXITCODE }
       if: ${{ matrix.os == 'windows' }}
@@ -481,9 +481,9 @@ jobs:
         $FOLDER_NAME = "csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}"
         $BUILD_FOLDER_NAME = "build-${{ matrix.execution_id }}"
 
-        $REPO_FOLDER="$ROOT_FOLDER/workspace/qt6"
-        $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/qt6/release"
-        $INSTALL_FOLDER="$ROOT_FOLDER/workspace/install/$FOLDER_NAME/qt6"
+        $REPO_FOLDER="$ROOT_FOLDER/_csw/qt6"
+        $BUILD_FOLDER="$ROOT_FOLDER/_csw/build/$BUILD_FOLDER_NAME/qt6/release"
+        $INSTALL_FOLDER="$ROOT_FOLDER/_csw/install/$FOLDER_NAME/qt6"
 
         New-Item -ItemType Directory -Force -Path "$INSTALL_FOLDER" | Out-Null
         New-Item -ItemType Directory -Force -Path "$BUILD_FOLDER" | Out-Null
@@ -503,7 +503,7 @@ jobs:
 
         $BUILD_FOLDER_NAME = "build-${{ matrix.execution_id }}"
 
-        $BUILD_FOLDER="$ROOT_FOLDER/workspace/build/$BUILD_FOLDER_NAME/qt6/release"
+        $BUILD_FOLDER="$ROOT_FOLDER/_csw/build/$BUILD_FOLDER_NAME/qt6/release"
 
 
         Set-Location $BUILD_FOLDER
@@ -526,12 +526,12 @@ jobs:
         repos_config_file_list = []
         repos_auto_search_list = []
         repos_version = [PackageVersion(name='qt6', version='6.12.0')]
-        base_install_dir = Path('workspace/install')
+        base_install_dir = Path('_csw/install')
         install_subdir = Path('csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}')
         variant_string = 'csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}'
         project_name = 'csqt6'
         project_version = '6.12.0'
-        output_file = Path('workspace/install/csqt6-6.12.0-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
+        output_file = Path('_csw/install/csqt6-6.12.0-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
 
         errors_list = get_package_versions_and_write_single_variant_manifest(
             repos_config_file_list=repos_config_file_list,
@@ -562,10 +562,10 @@ jobs:
             load_release_manifest_single_variant_and_prepare_archive,
         )
 
-        input_full_path = Path('workspace/install/csqt6-6.12.0-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
+        input_full_path = Path('_csw/install/csqt6-6.12.0-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}.csOrchestratorManifest')
         project_name_and_version = 'csqt6-6.12.0'
         context_os_architecture_compiler_generator_string = 'csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}'
-        input_base_dir = Path('workspace/install')
+        input_base_dir = Path('_csw/install')
 
         errors_list = load_release_manifest_single_variant_and_prepare_archive(
             input_full_path=input_full_path,
@@ -586,6 +586,6 @@ jobs:
       with:
         name: csqt6-6.12.0-csv1-${{ matrix.os }}-${{ matrix.os_version }}-${{ matrix.architecture }}-${{ matrix.architecture_variant }}-${{ matrix.compiler }}-${{ matrix.compiler_version }}-${{ matrix.generator }}
         path: |-
-          workspace/install/*.tar.gz
-          workspace/install/*.csOrchestratorManifest
+          _csw/install/*.tar.gz
+          _csw/install/*.csOrchestratorManifest
         overwrite: true

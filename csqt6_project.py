@@ -37,6 +37,7 @@ from utils.build_matrix import populate_build_matrix
 from utils.scripts import (
     LINUX_CONFIGURE_ARGS,
     MACOS_CONFIGURE_CMAKE_ARGS,
+    WORKSPACE_DIR,
     build_linux_script,
     build_windows_script,
     configure_repo_script_linux,
@@ -52,7 +53,7 @@ from utils.scripts import (
 def create_orchestrator() -> OptionalOrchestratorWithReport:
     report = Report()
 
-    base_target_dir = Path("workspace")
+    base_target_dir = Path(WORKSPACE_DIR)
     base_install_dir = base_target_dir / Path("install")
 
     o = create_default_orchestrator(
